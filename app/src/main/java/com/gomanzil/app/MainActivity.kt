@@ -11,336 +11,36 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
-    private val ink = Color.rgb(18, 25, 32)
-    private val green = Color.rgb(22, 120, 82)
-    private val orange = Color.rgb(242, 132, 25)
-    private val orangeSoft = Color.rgb(255, 244, 228)
+    private val blue = Color.rgb(9, 43, 70)
+    private val orange = Color.rgb(244, 135, 24)
+    private val green = Color.rgb(30, 125, 82)
+    private val soft = Color.rgb(247, 249, 248)
+    private val orangeSoft = Color.rgb(255, 245, 226)
     private val greenSoft = Color.rgb(235, 247, 241)
     private val muted = Color.rgb(105, 112, 120)
-    private val soft = Color.rgb(247, 249, 248)
-    private val line = Color.rgb(228, 233, 230)
+    private val white = Color.WHITE
+    private fun dp(v:Int)= (v*resources.displayMetrics.density).toInt()
+    private fun bg(c:Int,r:Int=17)=GradientDrawable().apply{setColor(c);cornerRadius=dp(r).toFloat()}
+    private fun t(s:String,z:Float,c:Int=blue,b:Boolean=false)=TextView(this).apply{text=s;textSize=z;setTextColor(c);typeface=Typeface.create("sans",if(b)Typeface.BOLD else Typeface.NORMAL)}
+    private lateinit var content:LinearLayout
+    private var pickup:EditText?=null; private var destination:EditText?=null
+    private var ride=0; private var driver=false
+    private val names=listOf("Bike","Auto","Car"); private val icons=listOf("🏍","🛺","🚗"); private val fares=listOf("From ₹49","From ₹69","From ₹119")
 
-    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
-    private fun bg(color: Int, radius: Int = 18) = GradientDrawable().apply {
-        setColor(color)
-        cornerRadius = dp(radius).toFloat()
-    }
-    private fun txt(value: String, size: Float, color: Int = ink, bold: Boolean = false) = TextView(this).apply {
-        text = value
-        textSize = size
-        setTextColor(color)
-        typeface = Typeface.create("sans", if (bold) Typeface.BOLD else Typeface.NORMAL)
-    }
-    private fun divider() = View(this).apply { setBackgroundColor(line) }
-
-    private lateinit var content: LinearLayout
-    private var pickup: EditText? = null
-    private var drop: EditText? = null
-    private var selectedRide = 0
-    private val rideNames = listOf("Bike", "Auto", "Car")
-    private val rideIcons = listOf("🏍", "🛺", "🚗")
-    private val rideFares = listOf("From ₹49", "From ₹69", "From ₹119")
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        window.statusBarColor = Color.WHITE
-        window.navigationBarColor = Color.WHITE
-        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-        buildShell()
-        showHome()
-    }
-
-    private fun buildShell() {
-        val outer = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.WHITE)
-        }
-        content = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), dp(8), dp(18), dp(12))
-        }
-        val scroll = ScrollView(this).apply {
-            isFillViewport = true
-            addView(content)
-        }
-        outer.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
-
-        val nav = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            setPadding(dp(8), dp(7), dp(8), dp(8))
-            background = bg(Color.WHITE, 0)
-            elevation = dp(10).toFloat()
-        }
-        listOf("⌂\nHome", "✦\nServices", "▣\nTrips", "♙\nProfile").forEachIndexed { i, item ->
-            val b = txt(item, 11f, if (i == 0) green else muted, i == 0).apply {
-                gravity = Gravity.CENTER
-                setPadding(0, dp(3), 0, dp(3))
-                isClickable = true
-                setOnClickListener {
-                    when (i) {
-                        0 -> showHome()
-                        1 -> showServices()
-                        2 -> showTrips()
-                        3 -> showProfile()
-                    }
-                }
-            }
-            nav.addView(b, LinearLayout.LayoutParams(0, dp(50), 1f))
-        }
-        outer.addView(nav, LinearLayout.LayoutParams(-1, dp(64)))
-        setContentView(outer)
-    }
-
-    private fun reset(title: String? = null) {
-        content.removeAllViews()
-        if (title != null) {
-            val top = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-            val back = txt("‹", 34f, ink, true).apply {
-                gravity = Gravity.CENTER
-                setOnClickListener { showHome() }
-            }
-            top.addView(back, LinearLayout.LayoutParams(dp(42), dp(46)))
-            top.addView(txt(title, 21f, ink, true), LinearLayout.LayoutParams(0, dp(46), 1f))
-            top.addView(txt("GoManzil", 12f, green, true).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(dp(70), dp(46)))
-            content.addView(top)
-        }
-    }
-
-    private fun brandHeader() {
-        val header = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        val mark = TextView(this).apply {
-            text = "G"
-            textSize = 24f
-            gravity = Gravity.CENTER
-            setTextColor(Color.WHITE)
-            typeface = Typeface.DEFAULT_BOLD
-            background = bg(green, 15)
-        }
-        header.addView(mark, LinearLayout.LayoutParams(dp(46), dp(46)))
-        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(11), 0, 0, 0) }
-        box.addView(txt("GoManzil", 23f, ink, true))
-        box.addView(txt("RIDE  •  TRAVEL  •  EXPLORE", 9.5f, orange, true), LinearLayout.LayoutParams(-1, dp(18)))
-        header.addView(box, LinearLayout.LayoutParams(0, dp(48), 1f))
-        val menu = txt("☰", 22f, ink).apply { gravity = Gravity.CENTER; isClickable = true; setOnClickListener { showProfile() } }
-        header.addView(menu, LinearLayout.LayoutParams(dp(44), dp(46)))
-        content.addView(header)
-    }
-
-    private fun showHome() {
-        reset()
-        brandHeader()
-        content.addView(txt("Where do you want to go?", 29f, ink, true), LinearLayout.LayoutParams(-1, dp(40)).apply { topMargin = dp(24) })
-        content.addView(txt("Book rides, trips and travel services across Himachal.", 14f, muted), LinearLayout.LayoutParams(-1, dp(28)))
-
-        val booking = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), dp(12), dp(12), dp(12))
-            background = bg(soft, 21)
-        }
-        pickup = locationField("Pickup location", true)
-        drop = locationField("Where to?", false)
-        booking.addView(pickup, LinearLayout.LayoutParams(-1, dp(54)))
-        booking.addView(divider(), LinearLayout.LayoutParams(-1, 1).apply { topMargin = dp(7); bottomMargin = dp(7); leftMargin = dp(18); rightMargin = dp(18) })
-        booking.addView(drop, LinearLayout.LayoutParams(-1, dp(54)))
-        val current = txt("◎  Use current location", 12.5f, green, true).apply {
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(10), dp(8), 0, 0)
-            isClickable = true
-            setOnClickListener { pickup?.setText("Current location") }
-        }
-        booking.addView(current, LinearLayout.LayoutParams(-1, dp(30)))
-        content.addView(booking, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(18) })
-
-        content.addView(txt("Choose your ride", 19f, ink, true), LinearLayout.LayoutParams(-1, dp(30)).apply { topMargin = dp(20) })
-        val rides = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        val cards = mutableListOf<LinearLayout>()
-        rideNames.forEachIndexed { i, name ->
-            val c = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER
-                background = bg(if (i == selectedRide) orangeSoft else Color.WHITE, 17)
-                setPadding(dp(3), dp(6), dp(3), dp(5))
-                elevation = dp(1).toFloat()
-                isClickable = true
-                setOnClickListener {
-                    selectedRide = i
-                    cards.forEachIndexed { n, v -> v.background = bg(if (n == selectedRide) orangeSoft else Color.WHITE, 17) }
-                    Toast.makeText(this@MainActivity, "$name selected • ${rideFares[i]}", Toast.LENGTH_SHORT).show()
-                }
-            }
-            c.addView(txt(rideIcons[i], 25f).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-1, dp(34)))
-            c.addView(txt(name, 13.5f, ink, true).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-1, dp(22)))
-            c.addView(txt(rideFares[i], 10f, muted).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-1, dp(16)))
-            cards.add(c)
-            rides.addView(c, LinearLayout.LayoutParams(0, dp(78), 1f).apply { marginEnd = if (i < 2) dp(8) else 0 })
-        }
-        content.addView(rides, LinearLayout.LayoutParams(-1, dp(78)).apply { topMargin = dp(7) })
-
-        val book = Button(this).apply {
-            text = "Book ${rideNames[selectedRide]}  →"
-            textSize = 17f
-            isAllCaps = false
-            setTextColor(Color.WHITE)
-            typeface = Typeface.DEFAULT_BOLD
-            background = bg(green, 17)
-            elevation = dp(2).toFloat()
-            setOnClickListener { confirmRide() }
-        }
-        content.addView(book, LinearLayout.LayoutParams(-1, dp(56)).apply { topMargin = dp(18) })
-        drop?.setOnEditorActionListener { _, action, _ ->
-            if (action == EditorInfo.IME_ACTION_DONE || action == EditorInfo.IME_ACTION_GO || action == EditorInfo.IME_ACTION_NEXT) {
-                confirmRide(); true
-            } else false
-        }
-
-        val trust = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
-        listOf("✓ Safe rides", "✓ Easy booking", "✓ Live updates").forEach { s -> trust.addView(txt(s, 11.5f, muted).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(0, dp(28), 1f)) }
-        content.addView(trust, LinearLayout.LayoutParams(-1, dp(30)).apply { topMargin = dp(7) })
-
-        content.addView(txt("Everything you can book", 19f, ink, true), LinearLayout.LayoutParams(-1, dp(30)).apply { topMargin = dp(17) })
-        val serviceRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        serviceCard(serviceRow, "🏍", "Local\nRide", orangeSoft) { confirmRide() }
-        serviceCard(serviceRow, "🗺", "Outstation\nTrip", soft) { showServices() }
-        serviceCard(serviceRow, "🏔", "Tour\nPackages", greenSoft) { showServices() }
-        content.addView(serviceRow, LinearLayout.LayoutParams(-1, dp(94)).apply { topMargin = dp(7) })
-
-        content.addView(txt("Popular in Himachal", 19f, ink, true), LinearLayout.LayoutParams(-1, dp(30)).apply { topMargin = dp(18) })
-        val places = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        listOf("Shimla", "Manali", "Dharamshala").forEachIndexed { i, p ->
-            val v = txt(p, 12.5f, ink, i == 0).apply {
-                gravity = Gravity.CENTER
-                background = bg(if (i == 0) orangeSoft else soft, 14)
-                isClickable = true
-                setOnClickListener { drop?.setText(p) }
-            }
-            places.addView(v, LinearLayout.LayoutParams(0, dp(42), 1f).apply { marginEnd = if (i < 2) dp(7) else 0 })
-        }
-        content.addView(places, LinearLayout.LayoutParams(-1, dp(42)).apply { topMargin = dp(7) })
-
-        content.addView(txt("Travel made for Himachal — rides, routes and trips in one place.", 12.5f, muted), LinearLayout.LayoutParams(-1, dp(38)).apply { topMargin = dp(17) })
-    }
-
-    private fun locationField(hint: String, first: Boolean): EditText = EditText(this).apply {
-        this.hint = hint
-        textSize = 15.5f
-        setTextColor(ink)
-        setHintTextColor(muted)
-        setSingleLine(true)
-        imeOptions = if (first) EditorInfo.IME_ACTION_NEXT else EditorInfo.IME_ACTION_DONE
-        setPadding(dp(12), 0, dp(10), 0)
-        background = bg(if (first) Color.rgb(255, 252, 232) else Color.WHITE, 15)
-        contentDescription = hint
-    }
-
-    private fun serviceCard(row: LinearLayout, icon: String, name: String, color: Int, action: () -> Unit) {
-        val c = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            background = bg(color, 16)
-            isClickable = true
-            setOnClickListener { action() }
-        }
-        c.addView(txt(icon, 25f).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-1, dp(42)))
-        c.addView(txt(name, 11.5f, ink, true).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-1, dp(34)))
-        row.addView(c, LinearLayout.LayoutParams(0, dp(94), 1f).apply { marginEnd = dp(7) })
-    }
-
-    private fun confirmRide() {
-        val from = pickup?.text?.toString()?.trim().orEmpty()
-        val to = drop?.text?.toString()?.trim().orEmpty()
-        if (from.isBlank() || to.isBlank()) {
-            Toast.makeText(this, "Pickup aur destination dono enter karo", Toast.LENGTH_SHORT).show()
-            if (from.isBlank()) pickup?.requestFocus() else drop?.requestFocus()
-            return
-        }
-        reset("Confirm your ride")
-        content.addView(txt("Your trip is ready", 27f, ink, true), LinearLayout.LayoutParams(-1, dp(38)).apply { topMargin = dp(22) })
-        val route = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(15), dp(16), dp(15)); background = bg(soft, 20) }
-        route.addView(txt("PICKUP", 10f, green, true))
-        route.addView(txt(from, 17f, ink, true), LinearLayout.LayoutParams(-1, dp(30)))
-        route.addView(txt("↓", 22f, orange, true), LinearLayout.LayoutParams(-1, dp(25)))
-        route.addView(txt("DESTINATION", 10f, green, true))
-        route.addView(txt(to, 17f, ink, true), LinearLayout.LayoutParams(-1, dp(30)))
-        content.addView(route, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) })
-
-        val fare = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = bg(orangeSoft, 17); setPadding(dp(14), 0, dp(14), 0) }
-        fare.addView(txt(rideIcons[selectedRide] + "  " + rideNames[selectedRide], 16f, ink, true), LinearLayout.LayoutParams(0, dp(56), 1f))
-        fare.addView(txt(rideFares[selectedRide], 16f, green, true))
-        content.addView(fare, LinearLayout.LayoutParams(-1, dp(56)).apply { topMargin = dp(14) })
-
-        val confirm = Button(this).apply {
-            text = "Confirm & Find Driver  →"
-            textSize = 16f
-            isAllCaps = false
-            setTextColor(Color.WHITE)
-            typeface = Typeface.DEFAULT_BOLD
-            background = bg(green, 17)
-            setOnClickListener { showSearching(from, to) }
-        }
-        content.addView(confirm, LinearLayout.LayoutParams(-1, dp(56)).apply { topMargin = dp(18) })
-        content.addView(txt("No payment is taken in this demo build. Driver matching and live tracking will connect to the backend in the production phase.", 11.5f, muted), LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(12) })
-    }
-
-    private fun showSearching(from: String, to: String) {
-        reset("Finding your driver")
-        val icon = txt("✓", 44f, green, true).apply { gravity = Gravity.CENTER; background = bg(greenSoft, 50) }
-        content.addView(icon, LinearLayout.LayoutParams(dp(92), dp(92)).apply { gravity = Gravity.CENTER; topMargin = dp(45) })
-        content.addView(txt("Ride request sent", 24f, ink, true).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-1, dp(38)).apply { topMargin = dp(20) })
-        content.addView(txt("Looking for a nearby ${rideNames[selectedRide].lowercase()} driver", 14f, muted).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-1, dp(28)))
-        val trip = txt("$from  →  $to", 14f, ink, true).apply { gravity = Gravity.CENTER; background = bg(soft, 16); setPadding(dp(10), 0, dp(10), 0) }
-        content.addView(trip, LinearLayout.LayoutParams(-1, dp(52)).apply { topMargin = dp(24) })
-        val cancel = Button(this).apply { text = "Back to home"; isAllCaps = false; setTextColor(green); background = bg(greenSoft, 17); setOnClickListener { showHome() } }
-        content.addView(cancel, LinearLayout.LayoutParams(-1, dp(52)).apply { topMargin = dp(16) })
-    }
-
-    private fun showServices() {
-        reset("Services")
-        content.addView(txt("One app for your ride + travel plans.", 26f, ink, true), LinearLayout.LayoutParams(-1, dp(70)).apply { topMargin = dp(20) })
-        content.addView(txt("Choose what you need — local rides, intercity travel or a complete Himachal trip.", 13.5f, muted), LinearLayout.LayoutParams(-1, dp(48)))
-
-        val services = listOf(
-            Triple("🏍", "Local Rides", "Bike • Auto • Car"),
-            Triple("🛣", "Outstation", "One-way & round trip"),
-            Triple("🏔", "Tour Packages", "Himachal sightseeing"),
-            Triple("✈", "Airport Transfer", "Pickup & drop"),
-            Triple("🚌", "Group Travel", "Tempo & larger groups"),
-            Triple("🏨", "Stay + Travel", "Trip planning in one place")
-        )
-        services.forEach { s ->
-            val row = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; background = bg(if (s.second == "Tour Packages") greenSoft else soft, 17); setPadding(dp(14), 0, dp(14), 0); isClickable = true }
-            row.addView(txt(s.first, 28f).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(dp(52), dp(62)))
-            val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(8), 0, 0, 0) }
-            box.addView(txt(s.second, 16f, ink, true))
-            box.addView(txt(s.third, 12f, muted), LinearLayout.LayoutParams(-1, dp(24)))
-            row.addView(box, LinearLayout.LayoutParams(0, dp(62), 1f))
-            row.addView(txt("›", 28f, orange, true).apply { gravity = Gravity.CENTER })
-            row.setOnClickListener { Toast.makeText(this, "${s.second} selected", Toast.LENGTH_SHORT).show() }
-            content.addView(row, LinearLayout.LayoutParams(-1, dp(70)).apply { topMargin = dp(9) })
-        }
-    }
-
-    private fun showTrips() {
-        reset("My Trips")
-        content.addView(txt("Your journeys in one place.", 25f, ink, true), LinearLayout.LayoutParams(-1, dp(45)).apply { topMargin = dp(22) })
-        val empty = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; background = bg(soft, 22); setPadding(dp(20), dp(28), dp(20), dp(28)) }
-        empty.addView(txt("▣", 42f, green, true).apply { gravity = Gravity.CENTER })
-        empty.addView(txt("No trips yet", 19f, ink, true).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-1, dp(34)))
-        empty.addView(txt("Your completed and upcoming rides will appear here.", 13f, muted).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-1, dp(48)))
-        val b = Button(this).apply { text = "Book your first ride"; isAllCaps = false; setTextColor(Color.WHITE); background = bg(green, 15); setOnClickListener { showHome() } }
-        empty.addView(b, LinearLayout.LayoutParams(-1, dp(50)).apply { topMargin = dp(8) })
-        content.addView(empty, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(20) })
-    }
-
-    private fun showProfile() {
-        reset("Profile")
-        val avatar = txt("G", 28f, Color.WHITE, true).apply { gravity = Gravity.CENTER; background = bg(green, 50) }
-        content.addView(avatar, LinearLayout.LayoutParams(dp(82), dp(82)).apply { gravity = Gravity.CENTER; topMargin = dp(25) })
-        content.addView(txt("GoManzil Rider", 21f, ink, true).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-1, dp(34)).apply { topMargin = dp(12) })
-        content.addView(txt("Ride • Travel • Explore", 12.5f, orange, true).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-1, dp(28)))
-        listOf("Account & mobile number", "Saved places", "Safety & emergency help", "Payments", "Offers & coupons", "Help & support").forEach { item ->
-            val row = txt("$item                                      ›", 14f, ink, true).apply { gravity = Gravity.CENTER_VERTICAL; background = bg(soft, 15); setPadding(dp(15), 0, dp(10), 0); isClickable = true; setOnClickListener { Toast.makeText(this, item, Toast.LENGTH_SHORT).show() } }
-            content.addView(row, LinearLayout.LayoutParams(-1, dp(54)).apply { topMargin = dp(8) })
-        }
-    }
+    override fun onCreate(b:Bundle?){super.onCreate(b);window.statusBarColor=white;window.navigationBarColor=white;window.decorView.systemUiVisibility=View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;shell();render()}
+    private fun shell(){val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setBackgroundColor(white)};content=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(8),dp(18),dp(12))};root.addView(ScrollView(this).apply{isFillViewport=true;addView(content)},LinearLayout.LayoutParams(-1,0,1f));val nav=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER;background=white;elevation=dp(8).toFloat()};listOf("⌂\nHome","▣\nTrips","₹\nEarnings","?\nHelp","♙\nProfile").forEachIndexed{i,s->nav.addView(t(s,10.5f,if(i==0)green:muted,i==0).apply{gravity=Gravity.CENTER;setOnClickListener{when(i){0->render();1->trips();2->earnings();3->help();4->profile()}}},LinearLayout.LayoutParams(0,dp(52),1f))};root.addView(nav,LinearLayout.LayoutParams(-1,dp(62)));setContentView(root)}
+    private fun reset(title:String?=null){content.removeAllViews();if(title!=null){val r=LinearLayout(this).apply{gravity=Gravity.CENTER_VERTICAL};r.addView(t("‹",32f,blue,true).apply{gravity=Gravity.CENTER;setOnClickListener{render()}},LinearLayout.LayoutParams(dp(42),dp(46)));r.addView(t(title,21f,blue,true),LinearLayout.LayoutParams(0,dp(46),1f));content.addView(r)}}
+    private fun header(){val r=LinearLayout(this).apply{gravity=Gravity.CENTER_VERTICAL};r.addView(TextView(this).apply{text="G";textSize=23f;gravity=Gravity.CENTER;setTextColor(white);typeface=Typeface.DEFAULT_BOLD;background=bg(blue,15)},LinearLayout.LayoutParams(dp(46),dp(46)));val b=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(11),0,0,0)};val brand=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL};brand.addView(t("Go",23f,orange,true));brand.addView(t("Manzil",23f,blue,true));b.addView(brand);val tag=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL};tag.addView(t("RIDE",9.5f,green,true));tag.addView(t("  •  TRAVEL",9.5f,white,true).apply{background=bg(blue,3)});tag.addView(t("  •  EXPLORE",9.5f,orange,true));b.addView(tag,LinearLayout.LayoutParams(-1,dp(18)));r.addView(b,LinearLayout.LayoutParams(0,dp(48),1f));r.addView(t(if(driver)"DRIVER\nON" else "PASSENGER\nON",8.5f,if(driver)white:blue,true).apply{gravity=Gravity.CENTER;background=bg(if(driver)green:orangeSoft,12);setOnClickListener{driver=!driver;render()}},LinearLayout.LayoutParams(dp(78),dp(46)));content.addView(r)}
+    private fun render(){if(driver)driverHome() else passengerHome()}
+    private fun passengerHome(){reset();header();content.addView(t("Where do you want to go?",29f,blue,true),LinearLayout.LayoutParams(-1,dp(40)).apply{topMargin=dp(22)});content.addView(t("Your ride, tour and travel plans in one app.",14f,muted),LinearLayout.LayoutParams(-1,dp(28)));val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(12),dp(12),dp(12),dp(12));background=bg(soft,21)};pickup=field("Pickup location",true);destination=field("Where do you want to go?",false);box.addView(pickup,LinearLayout.LayoutParams(-1,dp(54)));box.addView(View(this).apply{setBackgroundColor(Color.rgb(228,233,230))},LinearLayout.LayoutParams(-1,1).apply{topMargin=dp(7);bottomMargin=dp(7);leftMargin=dp(18);rightMargin=dp(18)});box.addView(destination,LinearLayout.LayoutParams(-1,dp(54)));box.addView(t("◎  Use current location",12.5f,green,true).apply{setPadding(dp(10),dp(8),0,0);setOnClickListener{pickup?.setText("Current location")}},LinearLayout.LayoutParams(-1,dp(30)));content.addView(box,LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(16)});content.addView(t("Choose your ride",19f,blue,true),LinearLayout.LayoutParams(-1,dp(30)).apply{topMargin=dp(18)});val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL};val cards=mutableListOf<LinearLayout>();names.forEachIndexed{i,n->val c=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER;background=bg(if(i==ride)orangeSoft:white,17);setOnClickListener{ride=i;cards.forEachIndexed{j,v->v.background=bg(if(j==ride)orangeSoft:white,17)}}};c.addView(t(icons[i],25f));c.addView(t(n,13.5f,blue,true));c.addView(t(fares[i],10f,muted));cards.add(c);row.addView(c,LinearLayout.LayoutParams(0,dp(82),1f).apply{marginEnd=if(i<2)dp(8)else 0})};content.addView(row,LinearLayout.LayoutParams(-1,dp(82)).apply{topMargin=dp(7)});content.addView(Button(this).apply{text="Book ${names[ride]}  →";textSize=17f;isAllCaps=false;setTextColor(white);typeface=Typeface.DEFAULT_BOLD;background=bg(green,17);setOnClickListener{confirmRide()}},LinearLayout.LayoutParams(-1,dp(56)).apply{topMargin=dp(17)});content.addView(t("✓ Safe rides        ✓ Easy booking        ✓ Live updates",11.5f,muted).apply{gravity=Gravity.CENTER},LinearLayout.LayoutParams(-1,dp(30)).apply{topMargin=dp(7)});content.addView(t("Tour & Travel",20f,blue,true),LinearLayout.LayoutParams(-1,dp(32)).apply{topMargin=dp(14)});val s=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL};service(s,"🏔","Tours",greenSoft){services()};service(s,"🗺","Outstation",soft){services()};service(s,"✈","Airport",orangeSoft){services()};service(s,"🚌","Group Travel",soft){services()};content.addView(s,LinearLayout.LayoutParams(-1,dp(86)).apply{topMargin=dp(6)});content.addView(t("Popular in Himachal",19f,blue,true),LinearLayout.LayoutParams(-1,dp(30)).apply{topMargin=dp(16)});val p=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL};listOf("Shimla","Manali","Dharamshala").forEachIndexed{i,x->p.addView(t(x,12.5f,blue,i==0).apply{gravity=Gravity.CENTER;background=bg(if(i==0)orangeSoft:soft,14);setOnClickListener{destination?.setText(x)}},LinearLayout.LayoutParams(0,dp(42),1f).apply{marginEnd=if(i<2)dp(7)else 0})};content.addView(p,LinearLayout.LayoutParams(-1,dp(42)).apply{topMargin=dp(6)})}
+    private fun field(h:String,first:Boolean)=EditText(this).apply{hint=h;textSize=15.5f;setTextColor(blue);setHintTextColor(muted);setSingleLine(true);imeOptions=if(first)EditorInfo.IME_ACTION_NEXT else EditorInfo.IME_ACTION_DONE;setPadding(dp(12),0,dp(10),0);background=bg(if(first)Color.rgb(255,252,232):white,15);if(!first)setOnEditorActionListener{_,a,_->if(a==EditorInfo.IME_ACTION_DONE||a==EditorInfo.IME_ACTION_GO){confirmRide();true}else false}}
+    private fun service(r:LinearLayout,icon:String,name:String,color:Int,a:()->Unit){r.addView(LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER;background=bg(color,15);setOnClickListener{a()};addView(t(icon,23f));addView(t(name,10.5f,blue,true))},LinearLayout.LayoutParams(0,dp(86),1f).apply{marginEnd=dp(7)})}
+    private fun confirmRide(){val f=pickup?.text?.toString()?.trim().orEmpty();val d=destination?.text?.toString()?.trim().orEmpty();if(f.isBlank()||d.isBlank()){Toast.makeText(this,"Pickup aur destination dono enter karo",Toast.LENGTH_SHORT).show();return};reset("Confirm Ride");content.addView(t("Your trip is ready",27f,blue,true),LinearLayout.LayoutParams(-1,dp(40)).apply{topMargin=dp(22)});content.addView(t("$f\n\n↓\n\n$d",17f,blue,true).apply{gravity=Gravity.CENTER_VERTICAL;background=bg(soft,20);setPadding(dp(16),dp(15),dp(16),dp(15))},LinearLayout.LayoutParams(-1,dp(150)).apply{topMargin=dp(16)});content.addView(Button(this).apply{text="Confirm & Find Driver  →";isAllCaps=false;setTextColor(white);background=bg(green,17);setOnClickListener{Toast.makeText(this,"Ride request sent",Toast.LENGTH_SHORT).show()}},LinearLayout.LayoutParams(-1,dp(56)).apply{topMargin=dp(16)})}
+    private fun driverHome(){reset();header();content.addView(t("Driver Dashboard",28f,blue,true),LinearLayout.LayoutParams(-1,dp(40)).apply{topMargin=dp(22)});content.addView(t("Manage your rides and earnings.",14f,muted));val on=LinearLayout(this).apply{gravity=Gravity.CENTER_VERTICAL;background=bg(greenSoft,18);setPadding(dp(14),0,dp(10),0)};on.addView(t("Driver mode\nOnline & ready for rides",15f,blue,true),LinearLayout.LayoutParams(0,dp(64),1f));on.addView(Button(this).apply{text="ONLINE";isAllCaps=false;setTextColor(white);background=bg(green,14);setOnClickListener{driver=false;render()}},LinearLayout.LayoutParams(dp(105),dp(44)));content.addView(on,LinearLayout.LayoutParams(-1,dp(70)).apply{topMargin=dp(15)});val st=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL};stat(st,"Today","₹1,280");stat(st,"Trips","12");stat(st,"Rating","4.9 ★");content.addView(st,LinearLayout.LayoutParams(-1,dp(82)).apply{topMargin=dp(14)});content.addView(t("New ride request",19f,blue,true),LinearLayout.LayoutParams(-1,dp(30)).apply{topMargin=dp(20)});val req=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;background=bg(orangeSoft,18);setPadding(dp(14),dp(12),dp(14),dp(12))};req.addView(t("🏍  Bike ride",16f,blue,true));req.addView(t("Bilaspur  →  Manali   •   ₹620 est.",13f,muted));req.addView(Button(this).apply{text="Accept Ride";isAllCaps=false;setTextColor(white);background=bg(green,14);setOnClickListener{Toast.makeText(this,"Ride accepted",Toast.LENGTH_SHORT).show()}},LinearLayout.LayoutParams(-1,dp(48)).apply{topMargin=dp(7)});content.addView(req,LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(7)});val tools=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL};service(tools,"₹","Earnings",greenSoft){earnings()};service(tools,"▣","Trips",soft){trips()};service(tools,"?","Help",orangeSoft){help()};service(tools,"♙","Profile",soft){profile()};content.addView(tools,LinearLayout.LayoutParams(-1,dp(86)).apply{topMargin=dp(18)})}
+    private fun stat(r:LinearLayout,a:String,b:String){r.addView(LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER;background=bg(soft,15);addView(t(b,18f,blue,true));addView(t(a,11f,muted))},LinearLayout.LayoutParams(0,dp(82),1f).apply{marginEnd=dp(7)})}
+    private fun services(){reset("Tour & Travel");content.addView(t("Travel services built for Himachal.",25f,blue,true),LinearLayout.LayoutParams(-1,dp(55)).apply{topMargin=dp(20)});listOf("🏔  Himachal Tour Packages","🗺  Outstation & Round Trips","✈  Airport Transfers","🚌  Group & Family Travel","🏨  Stay + Travel Planning").forEach{x->content.addView(t("$x                                      ›",15f,blue,true).apply{gravity=Gravity.CENTER_VERTICAL;background=bg(soft,16);setPadding(dp(14),0,dp(8),0);setOnClickListener{Toast.makeText(this,"Selected",Toast.LENGTH_SHORT).show()}},LinearLayout.LayoutParams(-1,dp(58)).apply{topMargin=dp(9)})})}
+    private fun trips(){reset("My Trips");content.addView(t("Your rides and travel bookings.",25f,blue,true),LinearLayout.LayoutParams(-1,dp(45)).apply{topMargin=dp(20)});content.addView(t("No trips yet. Upcoming and completed bookings will appear here.",14f,muted),LinearLayout.LayoutParams(-1,dp(55)).apply{topMargin=dp(10)});content.addView(Button(this).apply{text="Book a ride";isAllCaps=false;setTextColor(white);background=bg(green,15);setOnClickListener{render()}},LinearLayout.LayoutParams(-1,dp(52)).apply{topMargin=dp(10)})}
+    private fun earnings(){reset("Earnings");content.addView(t("₹1,280",34f,green,true),LinearLayout.LayoutParams(-1,dp(50)).apply{topMargin=dp(25)});content.addView(t("Today • 12 trips • 4.9 ★",13f,muted));listOf("Today" to "₹1,280","This week" to "₹7,840","This month" to "₹24,600").forEach{x->content.addView(t("${x.first}                                      ${x.second}",15f,blue,true).apply{gravity=Gravity.CENTER_VERTICAL;background=bg(soft,15);setPadding(dp(15),0,dp(8),0)},LinearLayout.LayoutParams(-1,dp(54)).apply{topMargin=dp(8)})})}
+    private fun help(){reset("Help & Safety");content.addView(t("Safety and support",26f,blue,true),LinearLayout.LayoutParams(-1,dp(42)).apply{topMargin=dp(22)});listOf("🛡  Safety & emergency help","☎  Contact support","❓  FAQs","⚠  Report a problem").forEach{x->content.addView(t(x,15f,blue,true).apply{gravity=Gravity.CENTER_VERTICAL;background=bg(soft,15);setPadding(dp(15),0,0,0)},LinearLayout.LayoutParams(-1,dp(56)).apply{topMargin=dp(9)})})}
+    private fun profile(){reset("Profile");content.addView(t("GoManzil Account",25f,blue,true),LinearLayout.LayoutParams(-1,dp(45)).apply{topMargin=dp(22)});listOf("Account & mobile number","Saved places","Payments","Offers & coupons","Safety settings","Help & support").forEach{x->content.addView(t("$x                                      ›",14f,blue,true).apply{gravity=Gravity.CENTER_VERTICAL;background=bg(soft,15);setPadding(dp(15),0,0,0)},LinearLayout.LayoutParams(-1,dp(54)).apply{topMargin=dp(8)})})}
 }
